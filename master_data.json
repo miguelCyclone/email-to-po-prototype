@@ -1,0 +1,130 @@
+{
+  "_meta": {
+    "description": "Master data for the BLP Digital FDE interview challenge (v2, expanded). All persons, suppliers and amounts are fictional. Use this as the source of truth for your prototype.",
+    "version": 2,
+    "base_currency": "CHF",
+    "fx_rates_to_chf": {
+      "CHF": 1.00,
+      "EUR": 0.96,
+      "USD": 0.88,
+      "GBP": 1.13
+    }
+  },
+  "suppliers": [
+    { "id": "SUP-001", "name": "Acme Bearings GmbH",           "vat_id": "DE123456789",             "country": "DE", "default_currency": "EUR", "payment_terms_days": 30, "preferred": true,  "status": "active" },
+    { "id": "SUP-002", "name": "SwissElectro AG",              "vat_id": "CHE-101.234.567 MWST",    "country": "CH", "default_currency": "CHF", "payment_terms_days": 14, "preferred": true,  "status": "active" },
+    { "id": "SUP-003", "name": "Nordic Tools AS",              "vat_id": "NO998877665",             "country": "NO", "default_currency": "EUR", "payment_terms_days": 45, "preferred": false, "status": "active" },
+    { "id": "SUP-004", "name": "Müller Industriebedarf",       "vat_id": "DE445566778",             "country": "DE", "default_currency": "EUR", "payment_terms_days": 30, "preferred": true,  "status": "active" },
+    { "id": "SUP-005", "name": "Office Plus Schweiz",          "vat_id": "CHE-202.345.678 MWST",    "country": "CH", "default_currency": "CHF", "payment_terms_days": 14, "preferred": true,  "status": "active" },
+
+    { "id": "SUP-006", "name": "ACME Bearing Group Ltd",       "vat_id": "GB887766554",             "country": "GB", "default_currency": "GBP", "payment_terms_days": 30, "preferred": false, "status": "active" },
+    { "id": "SUP-007", "name": "Mueller Industriebedarf AG",   "vat_id": "DE445566779",             "country": "DE", "default_currency": "EUR", "payment_terms_days": 30, "preferred": false, "status": "active" },
+    { "id": "SUP-008", "name": "Hydraulik Zentrale AG",        "vat_id": "CHE-303.456.789 MWST",    "country": "CH", "default_currency": "CHF", "payment_terms_days": 30, "preferred": true,  "status": "active" },
+    { "id": "SUP-009", "name": "PrecisionCast Metals Ltd",     "vat_id": "GB112233445",             "country": "GB", "default_currency": "GBP", "payment_terms_days": 60, "preferred": false, "status": "active" },
+    { "id": "SUP-010", "name": "Kabelwerk Rheintal GmbH",      "vat_id": "DE556677889",             "country": "DE", "default_currency": "EUR", "payment_terms_days": 30, "preferred": true,  "status": "active" },
+    { "id": "SUP-011", "name": "TechnoPlast Kunststoffe GmbH", "vat_id": "DE667788990",             "country": "DE", "default_currency": "EUR", "payment_terms_days": 21, "preferred": false, "status": "active" },
+    { "id": "SUP-012", "name": "Global Fastener Supply Inc.",  "vat_id": "US-EIN-841234567",        "country": "US", "default_currency": "USD", "payment_terms_days": 30, "preferred": false, "status": "active" },
+    { "id": "SUP-013", "name": "Bergmann Werkzeugbau KG",      "vat_id": "DE778899001",             "country": "DE", "default_currency": "EUR", "payment_terms_days": 30, "preferred": true,  "status": "active" },
+    { "id": "SUP-014", "name": "Elektro Bühler AG",            "vat_id": "CHE-404.567.890 MWST",    "country": "CH", "default_currency": "CHF", "payment_terms_days": 14, "preferred": true,  "status": "active" },
+    { "id": "SUP-015", "name": "Sensorik Nord GmbH",           "vat_id": "DE889900112",             "country": "DE", "default_currency": "EUR", "payment_terms_days": 45, "preferred": false, "status": "active" },
+    { "id": "SUP-016", "name": "Alpine Logistics Services AG", "vat_id": "CHE-505.678.901 MWST",    "country": "CH", "default_currency": "CHF", "payment_terms_days": 14, "preferred": true,  "status": "active" },
+    { "id": "SUP-017", "name": "Lombardi Componenti S.r.l.",   "vat_id": "IT01234567890",           "country": "IT", "default_currency": "EUR", "payment_terms_days": 60, "preferred": false, "status": "active" },
+    { "id": "SUP-018", "name": "Baltic Steel Trading OÜ",      "vat_id": "EE101234567",             "country": "EE", "default_currency": "EUR", "payment_terms_days": 30, "preferred": false, "status": "blocked" },
+    { "id": "SUP-019", "name": "Werkstatt Huber",              "vat_id": null,                      "country": "CH", "default_currency": "CHF", "payment_terms_days": 30, "preferred": false, "status": "active" },
+    { "id": "SUP-020", "name": "Zenith Automation BV",         "vat_id": "NL004567891B01",          "country": "NL", "default_currency": "EUR", "payment_terms_days": 45, "preferred": false, "status": "active" },
+    { "id": "SUP-021", "name": "Feinmechanik Tanner GmbH",     "vat_id": "CHE-606.789.012 MWST",    "country": "CH", "default_currency": "CHF", "payment_terms_days": 30, "preferred": true,  "status": "active" },
+    { "id": "SUP-022", "name": "IndustrieChemie Basel AG",     "vat_id": "CHE-707.890.123 MWST",    "country": "CH", "default_currency": "CHF", "payment_terms_days": 14, "preferred": true,  "status": "active" },
+    { "id": "SUP-023", "name": "Nihon Seiko Trading Co.",      "vat_id": "JP-9010001234567",        "country": "JP", "default_currency": "USD", "payment_terms_days": 60, "preferred": false, "status": "active" },
+    { "id": "SUP-024", "name": "Rapid Prototyping Studio GmbH","vat_id": "DE990011223",             "country": "DE", "default_currency": "EUR", "payment_terms_days": 14, "preferred": false, "status": "active" },
+    { "id": "SUP-025", "name": "Verpackung Schneider GmbH",    "vat_id": "DE110022334",             "country": "DE", "default_currency": "EUR", "payment_terms_days": 30, "preferred": true,  "status": "active" }
+  ],
+  "cost_centers": [
+    { "code": "CC-1001", "name": "Plant Maintenance Schorndorf", "owner_employee_id": "EMP-101", "department": "OPS" },
+    { "code": "CC-1002", "name": "Production Line A",            "owner_employee_id": "EMP-102", "department": "OPS" },
+    { "code": "CC-1003", "name": "Production Line B",            "owner_employee_id": "EMP-103", "department": "OPS" },
+    { "code": "CC-1004", "name": "Toolroom & Fixtures",          "owner_employee_id": "EMP-501", "department": "OPS" },
+    { "code": "CC-1005", "name": "Warehouse & Logistics",        "owner_employee_id": "EMP-105", "department": "LOG" },
+    { "code": "CC-2001", "name": "R&D Hardware",                 "owner_employee_id": "EMP-201", "department": "RND" },
+    { "code": "CC-2002", "name": "R&D Test Lab",                 "owner_employee_id": "EMP-202", "department": "RND" },
+    { "code": "CC-2003", "name": "Product Design",               "owner_employee_id": "EMP-203", "department": "RND" },
+    { "code": "CC-3001", "name": "Office Zurich HQ",             "owner_employee_id": "EMP-301", "department": "G&A" },
+    { "code": "CC-3002", "name": "Office London",                "owner_employee_id": "EMP-302", "department": "G&A" },
+    { "code": "CC-3003", "name": "Office Schorndorf",            "owner_employee_id": "EMP-303", "department": "G&A" },
+    { "code": "CC-4001", "name": "Quality Assurance Lab",        "owner_employee_id": "EMP-401", "department": "QA"  },
+    { "code": "CC-4002", "name": "Metrology",                    "owner_employee_id": "EMP-402", "department": "QA"  },
+    { "code": "CC-5001", "name": "IT Infrastructure",            "owner_employee_id": "EMP-451", "department": "IT"  },
+    { "code": "CC-5002", "name": "IT Software & Licences",       "owner_employee_id": "EMP-452", "department": "IT"  }
+  ],
+  "departments": [
+    { "code": "OPS", "name": "Operations",                 "head_employee_id": "EMP-501" },
+    { "code": "RND", "name": "Research & Development",     "head_employee_id": "EMP-502" },
+    { "code": "G&A", "name": "General & Administrative",    "head_employee_id": "EMP-503" },
+    { "code": "QA",  "name": "Quality Assurance",          "head_employee_id": "EMP-504" },
+    { "code": "IT",  "name": "Information Technology",     "head_employee_id": "EMP-505" },
+    { "code": "LOG", "name": "Logistics",                  "head_employee_id": "EMP-506" }
+  ],
+  "employees": [
+    { "id": "EMP-101", "name": "Hans Meier",         "email": "hans.meier@customer.com",         "role": "cost_center_owner" },
+    { "id": "EMP-102", "name": "Petra Brunner",      "email": "petra.brunner@customer.com",      "role": "cost_center_owner" },
+    { "id": "EMP-103", "name": "Daniel Kunz",        "email": "daniel.kunz@customer.com",        "role": "cost_center_owner" },
+    { "id": "EMP-104", "name": "Reto Ammann",        "email": "reto.ammann@customer.com",        "role": "cost_center_owner" },
+    { "id": "EMP-105", "name": "Silvia Moser",       "email": "silvia.moser@customer.com",       "role": "cost_center_owner" },
+    { "id": "EMP-201", "name": "Lukas Frei",         "email": "lukas.frei@customer.com",         "role": "cost_center_owner" },
+    { "id": "EMP-202", "name": "Anna Widmer",        "email": "anna.widmer@customer.com",        "role": "cost_center_owner" },
+    { "id": "EMP-203", "name": "Fabio Rossi",        "email": "fabio.rossi@customer.com",        "role": "cost_center_owner" },
+    { "id": "EMP-301", "name": "Sara Keller",        "email": "sara.keller@customer.com",        "role": "cost_center_owner" },
+    { "id": "EMP-302", "name": "James Whitfield",    "email": "james.whitfield@customer.com",    "role": "cost_center_owner" },
+    { "id": "EMP-303", "name": "Katrin Lehmann",     "email": "katrin.lehmann@customer.com",     "role": "cost_center_owner" },
+    { "id": "EMP-401", "name": "Yves Girard",        "email": "yves.girard@customer.com",        "role": "cost_center_owner" },
+    { "id": "EMP-402", "name": "Corinne Baumann",    "email": "corinne.baumann@customer.com",    "role": "cost_center_owner" },
+    { "id": "EMP-451", "name": "Pascal Steiner",     "email": "pascal.steiner@customer.com",     "role": "cost_center_owner" },
+    { "id": "EMP-452", "name": "Nina Hofmann",       "email": "nina.hofmann@customer.com",       "role": "cost_center_owner" },
+
+    { "id": "EMP-501", "name": "Andrea Roth",        "email": "andrea.roth@customer.com",        "role": "department_head" },
+    { "id": "EMP-502", "name": "Markus Schmid",      "email": "markus.schmid@customer.com",      "role": "department_head" },
+    { "id": "EMP-503", "name": "Olivia Tanner",      "email": "olivia.tanner@customer.com",      "role": "department_head" },
+    { "id": "EMP-504", "name": "Nadia Berger",       "email": "nadia.berger@customer.com",       "role": "department_head" },
+    { "id": "EMP-505", "name": "Stefan Vogel",       "email": "stefan.vogel@customer.com",       "role": "department_head" },
+    { "id": "EMP-506", "name": "Marco Bianchi",      "email": "marco.bianchi@customer.com",      "role": "department_head" },
+
+    { "id": "EMP-701", "name": "Daniela Huber",      "email": "daniela.huber@customer.com",      "role": "finance" },
+    { "id": "EMP-702", "name": "Thomas Egger",       "email": "thomas.egger@customer.com",       "role": "finance", "deputy_for": "EMP-701" },
+    { "id": "EMP-801", "name": "Roger Studer",       "email": "roger.studer@customer.com",       "role": "cfo" },
+    { "id": "EMP-901", "name": "Beatrice Fischer",   "email": "beatrice.fischer@customer.com",   "role": "ceo" },
+
+    { "id": "EMP-110", "name": "Tobias Weber",       "email": "tobias.weber@customer.com",       "role": "requester_only", "default_cost_center": "CC-1001" },
+    { "id": "EMP-111", "name": "Miriam Frick",       "email": "miriam.frick@customer.com",       "role": "requester_only", "default_cost_center": "CC-1002" },
+    { "id": "EMP-112", "name": "Ahmed Nasser",       "email": "ahmed.nasser@customer.com",       "role": "requester_only", "default_cost_center": "CC-1005" },
+    { "id": "EMP-210", "name": "Sophie Dubois",      "email": "sophie.dubois@customer.com",      "role": "requester_only", "default_cost_center": "CC-2002" },
+    { "id": "EMP-310", "name": "Emily Carter",       "email": "emily.carter@customer.com",       "role": "requester_only", "default_cost_center": "CC-3002" },
+    { "id": "EMP-311", "name": "Luca Ferrari",       "email": "luca.ferrari@customer.com",       "role": "requester_only", "default_cost_center": "CC-3001" },
+    { "id": "EMP-410", "name": "Ruedi Zimmermann",   "email": "ruedi.zimmermann@customer.com",   "role": "requester_only", "default_cost_center": "CC-4001" },
+    { "id": "EMP-460", "name": "Oliver Brand",       "email": "oliver.brand@customer.com",       "role": "requester_only", "default_cost_center": "CC-5001" }
+  ],
+  "approval_limits_chf": [
+    { "from": 0,        "to": 1000,      "required_roles": ["cost_center_owner"] },
+    { "from": 1001,     "to": 10000,     "required_roles": ["cost_center_owner", "department_head"] },
+    { "from": 10001,    "to": 50000,     "required_roles": ["cost_center_owner", "department_head", "finance"] },
+    { "from": 50001,    "to": 250000,    "required_roles": ["cost_center_owner", "department_head", "finance", "cfo"] },
+    { "from": 250001,   "to": null,      "required_roles": ["cost_center_owner", "department_head", "finance", "cfo", "ceo"] }
+  ],
+  "rules": {
+    "self_approval_forbidden": true,
+    "duplicate_role_collapses": true,
+    "approvals_are_sequential": true
+  },
+  "gl_accounts": [
+    { "code": "5100", "name": "Maintenance & Repair Materials" },
+    { "code": "5200", "name": "Production Consumables" },
+    { "code": "5300", "name": "Spare Parts" },
+    { "code": "5400", "name": "Tooling & Fixtures" },
+    { "code": "6100", "name": "R&D Hardware" },
+    { "code": "6200", "name": "R&D Consumables & Prototyping" },
+    { "code": "7100", "name": "Office Supplies" },
+    { "code": "7200", "name": "IT Equipment" },
+    { "code": "7300", "name": "Software & Licences" },
+    { "code": "7400", "name": "Lab & Measurement Equipment" },
+    { "code": "7500", "name": "Packaging Material" },
+    { "code": "7600", "name": "Freight & Logistics Services" }
+  ]
+}

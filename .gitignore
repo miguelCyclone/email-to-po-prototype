@@ -1,0 +1,22 @@
+# Local environment files
+.env
+.env.*
+*.env
+*.env.*
+
+# Challenge instructions
+/CHALLENGE_BRIEF.md.pdf
+
+# Local execution plan; excluded from the challenge submission
+/build/
+
+# Prototype runtime files
+/.venv/
+/data/
+__pycache__/
+*.pyc
+
+# Node.js / TypeScript prototype
+/node_modules/
+/dist/
+*.tsbuildinfo
