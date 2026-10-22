@@ -33,6 +33,7 @@ Open **http://127.0.0.1:3000**. Import an `.eml` and optionally a PDF. Named sam
 - Clarifications, confirmations, and rejection notices appear in **Outbox** as drafts. They are not sent.
 - A reply containing the `REQ-XXXXXXXX` reference updates that request. Corrections create a new revision and reset decisions.
 - Requester and approver clicks are simulated; there is no login or verified identity.
+- [Video walkthrough](demo/walkthrough.mp4): 42-second silent, captioned run through confirmation, ordered approvals, PO creation, and an expired-quote hold.
 
 ## Mock ERP boundary
 
@@ -262,18 +263,18 @@ flowchart TD
 
 #### Local model and token budget
 
-`qwen3:1.7b` is the local CPU demo model. Four live imports here took 30–54 s each. Extraction can still be wrong; deterministic checks and requester confirmation gate approvals.
+`qwen3:1.7b` is the local CPU demo model. Eight live imports here took 22–54 s each. Extraction can still be wrong; deterministic checks and requester confirmation gate approvals.
 
 | Measure | Tokens | Context remaining (%) | Basis |
 | --- | ---: | ---: | --- |
 | Model maximum context | 40,960 | — | Installed model metadata. |
-| Demo context window | 4,096 | — | Planned Ollama `num_ctx`; request shorter input before extraction if it cannot fit. |
+| Demo context window | 8,192 | — | Ollama `num_ctx`; request shorter input before extraction if it cannot fit. |
 | Average sample text | ~308 | — | Mean of 48 email bodies plus their named PDFs. |
 | Largest sample text | ~1,556 | — | `email_37.eml` + `quote_acme_long.pdf`. |
-| Average full request budget | ~1,200 | ~71% | Sample text + 400 instruction tokens + 500 output tokens. |
-| Largest full sample budget | ~2,450 | ~40% | Same allowance added to the largest sample. |
+| Average full request budget | ~1,800 | ~78% | Sample text + 400 instruction tokens + 1,100 output tokens. |
+| Largest full sample budget | ~3,050 | ~63% | Same allowance added to the largest sample. |
 
-Estimates use ~4 characters/token plus 400 instruction and 500 output tokens. Check actual counts with Ollama's `prompt_eval_count` and `eval_count`. [Model context](https://ollama.com/library/qwen3/tags) · [API counters](https://docs.ollama.com/api/generate)
+Estimates use ~4 characters/token plus 400 instruction and 1,100 output tokens. Check actual counts with Ollama's `prompt_eval_count` and `eval_count`. [Model context](https://ollama.com/library/qwen3/tags) · [API counters](https://docs.ollama.com/api/generate)
 
 **User channels and identity**
 
