@@ -4,7 +4,7 @@ export function escapeHtml(value: unknown): string { return String(value ?? '').
 const head = (title: string): string => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeHtml(title)} · Procurement demo</title><link rel="stylesheet" href="/app.css"></head><body><header><a href="/">Procurement prototype</a><nav><a href="/">Requests</a><a href="/outbox">Outbox</a></nav></header><main>`;
 const foot = `</main><footer>Local demo · requester and approver actions are simulated, not authenticated</footer><script src="/app.js" defer></script></body></html>`;
 const stateLabels: Record<string, string> = {
-  needs_info: 'Requester info needed', review: 'Procurement review',
+  needs_info: 'Requester info needed', review: 'Needs resolution',
   awaiting_confirmation: 'Requester confirmation', awaiting_approval: 'Approver decision',
   approved: 'Ready to create PO', rejected: 'Rejected', submitting: 'Creating PO',
   submit_error: 'ERP submission error', po_created: 'PO created'
@@ -14,7 +14,7 @@ export function listPage(rows: RequestRow[]): string {
   return head('Requests') + `<section class="hero"><div><h1>Purchase requests</h1><p>Import an email, review the extracted draft, confirm it, then approve in order.</p></div><div class="pill">Demo only · no verified identity</div></section>
     <section class="card"><h2>Import email</h2><form id="import-form"><label>Email (.eml)<input name="email" type="file" accept=".eml,message/rfc822" required></label><label>Optional quote PDF<input name="pdf" type="file" accept=".pdf,application/pdf"></label><button type="submit">Import and extract</button><p id="import-status" class="muted">Local Ollama may take a minute. The sample quotes are resolved by exact attachment name.</p></form></section>
     <section class="card"><h2>Queue</h2><p class="muted">Each row is a separate request. Email follow-ups are drafts in Outbox; none are sent.</p><div class="status-guide">
-      <div>${badge('review')}<span>Procurement resolves an issue.</span></div>
+      <div>${badge('review')}<span>Procurement action required before approval.</span></div>
       <div>${badge('needs_info')}<span>Requester supplies missing or corrected facts.</span></div>
       <div>${badge('awaiting_approval')}<span>The next approver decides; no PO yet.</span></div>
       <div>${badge('po_created')}<span>Mock ERP returned a PO number.</span></div>
