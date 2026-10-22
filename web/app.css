@@ -41,6 +41,8 @@ th{font-size:.82rem;color:#607383;text-transform:uppercase;letter-spacing:.03em}
 .badge.po_created,.badge.approved{background:#dbf2e8;color:#1a6a4b}
 .badge.review,.badge.needs_info,.badge.submit_error{background:#fff1d8;color:#8e5d14}
 .badge.rejected{background:#fce7e7;color:#a23232}
+.status-guide{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin:16px 0 20px}
+.status-guide>div{display:flex;align-items:flex-start;flex-direction:column;gap:6px;padding:11px 12px;border:1px solid #e4eaee;border-radius:8px;font-size:.85rem;color:#536473}
 .steps{padding-left:20px}
 .steps li{padding:4px 0}
 footer{text-align:center;color:#80909a;padding:20px}
