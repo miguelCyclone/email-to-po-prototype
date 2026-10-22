@@ -231,6 +231,13 @@ export class Workflow {
     } else if (!['submitting', 'submit_error'].includes(row.state)) throw new FlowError('Submission is not retryable.');
     const submission = this.repo.submission(id, row.revision)!;
     if (hash(JSON.parse(submission.payload_json)) !== submission.payload_sha256) throw new FlowError('Frozen ERP payload hash mismatch.');
+    if (existing) {
+      const fresh = validateDraft(JSON.parse(row.draft_json) as Draft, this.clock());
+      if (!fresh.value || hash(fresh.value) !== row.draft_sha256) {
+        this.hold(id, row.revision, fresh.issues.length ? fresh.issues : [{ field: 'draft', code: 'changed', detail: 'Confirmed draft changed before ERP retry.', kind: 'procurement' }]);
+        throw new FlowError('ERP retry held: request is stale. Procurement must reconcile the prior attempt.');
+      }
+    }
     try {
       const response = await postPurchaseOrder(submission.payload_json, submission.idempotency_key);
       const poNumber = typeof response.po_number === 'string' ? response.po_number : null;

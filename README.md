@@ -170,7 +170,7 @@ All 21 supplied PDFs fit the proposed limits (maximum: 2 pages, 5,810 bytes). If
 | --- | --- | --- | --- |
 | Requester | Approvals | Match sender to `employees[].email` to detect self approval; unknown → review. | Email header; `employees[].email` |
 | Supplier | PO + approvals | Require `supplier_id` in `suppliers[]` with `status: active`; otherwise stop. | `suppliers[]`; mock API requires ID but does not enforce status |
-| Cost centre | Approvals | Resolve owner and department; missing or unknown → review. | `cost_centers[]`; `departments[]`; optional to mock API |
+| Cost centre | Approvals | Resolve owner and department; missing or unknown → requester clarification. | `cost_centers[]`; `departments[]`; optional to mock API |
 | Line items | PO | Nonempty; each needs `item_name`, `quantity > 0`, `unit_price ≥ 0`, and `unit`. | Email/quote; mock API; no unit list or upper limits supplied |
 | Currency and FX | PO + approvals | CHF, EUR, USD, or GBP; convert total to CHF. | Mock API; `_meta.fx_rates_to_chf` |
 | Total | PO + approvals | Finite; reconcile lines, tax, freight, and discounts. Unexplained difference → review. | Email/quote; mock API only warns on mismatches |
@@ -189,7 +189,7 @@ flowchart LR
     V[Requisition draft validated] --> C[Requester confirms current revision] --> A[All required approvals recorded] --> P[PO created in ERP]
 ```
 
-`Complete and consistent? = Yes` validates the draft, but cannot prove it matches the requester's intent. The requester must confirm the current revision before approvals. After approvals, recheck delivery and quote dates. POST with a stable `Idempotency-Key`, then store the PO number. Use `?strict=1` only when all optional advisory fields are present; it rejects missing `gl_account` and `item_code` even when they are legitimately absent. Validate material fields in the app and record any mock API warnings.
+`Complete and consistent? = Yes` validates the draft, but cannot prove it matches the requester's intent. The requester must confirm the current revision before approvals. After approvals and before each ERP attempt, recheck delivery and quote dates. A stale retry goes to procurement for reconciliation. POST with a stable `Idempotency-Key`, then store the PO number. Use `?strict=1` only when all optional advisory fields are present; it rejects missing `gl_account` and `item_code` even when they are legitimately absent. Validate material fields in the app and record any mock API warnings.
 
 ## Solution architecture
 

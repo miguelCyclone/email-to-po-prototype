@@ -251,3 +251,30 @@ test('unknown requester and quote supplier disagreement cannot reach confirmatio
     assert.ok((result.issues as { code: string }[]).some(i => i.code === 'unknown_requester'));
   } finally { repo.close(); }
 });
+
+test('ERP retry is held if delivery or quote expires after the first attempt', async () => {
+  const repo = new Repository(':memory:');
+  const id = 'REQ-RETRY-DATE';
+  repo.create({ id, requester_email: 'tobias.weber@customer.com', subject: 'Retry', received_at: '2026-10-22T00:00:00Z', draft_json: '{}', state: 'review' });
+  let currentTime = new Date('2026-10-22T12:00:00Z'); let posts = 0;
+  const flow = new Workflow(repo, () => currentTime);
+  const server = createServer(async (request, response) => {
+    posts += 1;
+    for await (const _chunk of request) { /* drain */ }
+    response.writeHead(503, { 'Content-Type': 'application/json' }); response.end(JSON.stringify({ error: 'unavailable' }));
+  });
+  server.listen(0, '127.0.0.1'); await once(server, 'listening');
+  process.env.MOCK_ERP_URL = `http://127.0.0.1:${(server.address() as { port: number }).port}/purchase-orders`;
+  const input = draft(); input.requested_delivery_date = '2026-10-25'; input.quote_valid_until = '2026-10-24';
+  try {
+    const one = flow.correct(id, input);
+    const two = flow.confirm(id, one.revision as number, one.draft_sha256 as string, 'confirmed');
+    for (const step of two.approvals as { id: number }[]) flow.approve(id, step.id, 'approved');
+    assert.equal((await flow.submit(id)).state, 'submit_error');
+    currentTime = new Date('2026-10-26T12:00:00Z');
+    await assert.rejects(flow.submit(id), /retry held/);
+    assert.equal(posts, 1);
+    assert.equal(repo.get(id)?.state, 'review');
+    assert.ok(repo.submission(id, one.revision as number)?.idempotency_key);
+  } finally { delete process.env.MOCK_ERP_URL; server.close(); repo.close(); }
+});
