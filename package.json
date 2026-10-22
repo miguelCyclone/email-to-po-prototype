@@ -1,0 +1,27 @@
+{
+  "name": "procurement-prototype",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "tsx src/server.ts",
+    "check": "tsc --noEmit",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "demo-email": "tsx scripts/demoEmail.ts",
+    "check-samples": "tsx scripts/checkSamples.ts"
+  },
+  "dependencies": {
+    "better-sqlite3": "12.2.0",
+    "decimal.js": "10.6.0",
+    "fastify": "5.12.7",
+    "mailparser": "3.12.3"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "7.6.13",
+    "@types/mailparser": "^3.9.0",
+    "@types/node": "24.10.1",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3"
+  }
+}

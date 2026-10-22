@@ -1,0 +1,40 @@
+export type State = 'needs_info' | 'review' | 'awaiting_confirmation' | 'awaiting_approval' | 'approved' | 'rejected' | 'submitting' | 'submit_error' | 'po_created';
+export type Issue = { field: string; code: string; detail: string; kind: 'requester' | 'procurement' | 'reject' };
+export type Line = { item_name: string | null; quantity: string | null; unit: string | null; unit_price: string | null; item_code?: string | null };
+export type Draft = {
+  supplier_name: string | null;
+  cost_centre: string | null;
+  gl_account?: string | null;
+  requested_delivery_date: string | null;
+  quote_valid_until: string | null;
+  currency: string | null;
+  line_items: Line[];
+  tax_amount: string | null;
+  freight_amount: string | null;
+  discount_amount: string | null;
+  stated_total: string | null;
+  evidence: { field: string; source: string; excerpt: string }[];
+  conflicts: { field: string; email_value: string; quote_value: string }[];
+};
+export type Validated = {
+  supplier_id: string;
+  supplier_name: string;
+  currency: string;
+  total: string;
+  total_chf_minor: number;
+  requested_delivery_date: string;
+  quote_valid_until: string | null;
+  cost_centre: string;
+  gl_account?: string | null;
+  line_items: { item_name: string; quantity: string; unit: string; unit_price: string; item_code?: string }[];
+  tax_amount: string;
+  freight_amount: string;
+  discount_amount: string;
+};
+export type RequestRow = {
+  id: string; revision: number; state: State; requester_email: string; subject: string; received_at: string;
+  draft_json: string; validated_json: string | null; draft_sha256: string | null; total_chf_minor: number | null;
+  created_at: string; updated_at: string;
+};
+export type Approval = { id: number; request_id: string; revision: number; position: number; role: string; approver_employee_id: string; decision: string; note: string; decided_at: string | null };
+export type ErpSubmission = { id: number; request_id: string; revision: number; payload_json: string; payload_sha256: string; idempotency_key: string; status: string; po_number: string | null; response_json: string | null };

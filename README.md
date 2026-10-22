@@ -4,17 +4,35 @@
 
 Turn purchasing emails and supplier quotes into requisitions. Route approvals in order. Create a PO through the mock ERP **only after approval**.
 
-## What’s broken
+## What was supplied
 
-The repo contains sample inputs and a mock API, but no application. Missing prices, vague requests, expired quotes, wrong totals, and unverified approval claims are test cases.
+The challenge supplied sample inputs, master data, and a mock API. The app in `src/` is the prototype built around them. Missing prices, vague requests, expired quotes, wrong totals, and unverified approval claims are test cases.
 
-## What we need to build
+## Challenge requirements
 
 1. Parse `.eml` messages and PDF quotes for supplier, items, prices, currency, cost centre, and delivery date.
 2. Validate fields; request clear missing information and escalate ambiguity.
 3. Convert totals to CHF; enforce sequential approvals and prevent self approval.
 4. Record decisions; send approved requests to [mock_po_api.py](mock_po_api.py) with an idempotency key.
 5. Commit the code to Git; submit a short README and video walkthrough as specified in the [brief](CHALLENGE_BRIEF.md.pdf).
+
+## Run the prototype
+
+Requirements: Node.js 24+, Python 3, Poppler (`pdfinfo`, `pdftotext`; `pdfunite` for one test), and local Ollama with `qwen3:1.7b`. Start Ollama (`ollama serve` if it is not already running). All services bind to localhost.
+
+```bash
+npm install
+ollama pull qwen3:1.7b              # once, if missing
+python3 mock_po_api.py              # terminal 1
+npm start                           # terminal 2
+```
+
+Open **http://127.0.0.1:3000**. Import an `.eml` and optionally a PDF. Named sample PDFs resolve from `docs/quotes-*/quotes/`. For a currently valid end-to-end example, run `npm run demo-email` and import `data/demo_current.eml`. Confirm the draft, approve each shown step, then create the PO. The supplied dated quotes are expired as of 2026-10-22, so they should stop in review.
+
+- `npm run check` — TypeScript; `npm test` — workflow gates; `npm run check-samples` — parse all supplied emails and PDFs.
+- Clarifications, confirmations, and rejection notices appear in **Outbox** as drafts. They are not sent.
+- A reply containing the `REQ-XXXXXXXX` reference updates that request. Corrections create a new revision and reset decisions.
+- Requester and approver clicks are simulated; there is no login or verified identity.
 
 ## Mock ERP boundary
 
@@ -218,7 +236,7 @@ flowchart TD
         PDF -->|Quote text| Extract
         Extract -->|Draft fields| Rules[Schema checks and workflow rules]
         UI[Server-rendered web UI] <-->|State and actions| Rules
-        Rules -->|Clarification draft| Notify[Clarification outbox and email adapter]
+        Rules -->|Clarification draft| Notify[Clarification draft outbox]
     end
     Extract <-->|Prompt and JSON| LLM[Ollama: qwen3:1.7b]
     Master[master_data.json] -->|Reference data| Rules
@@ -226,15 +244,15 @@ flowchart TD
     Procurement[Procurement] -->|Review and corrections| UI
     Requester -->|Simulated draft confirmation| UI
     Approvers[Approvers] -->|Decisions| UI
-    Notify -->|SMTP if configured| Requester
+    Notify -.->|Draft preview only| Requester
     Rules -->|Approved PO and key| ERP[Python mock PO API]
 ```
 
 | Component | Role in prototype | Why this choice | Other choice and why not |
 | --- | --- | --- | --- |
-| Email intake | Upload and parse `.eml` with [MailParser](https://nodemailer.com/extras/mailparser/); match replies. | Handles MIME and attachments in the Node app. | Python parser only if a sample needs it; live mailbox needs credentials. |
+| Email intake | Upload and parse `.eml` with [MailParser](https://nodemailer.com/extras/mailparser/); correlate replies by request ID. | Handles MIME and attachments in the Node app. | Python parser only if a sample needs it; live mailbox needs credentials. |
 | PDF text | Use `pdftotext -layout`; review unreadable files. | All 21 sample PDFs have extractable text. | OCR is for scanned PDFs; send those to manual review in this prototype. |
-| Field extraction | Map email and PDF text to typed fields; validate in code. | Handles varied wording in unseen emails. | Regex-only is simpler but brittle; RAG is unnecessary for structured master data. |
+| Field extraction | Ollama drafts fields; a PDF parser reconciles quote dates, rows, totals, and tax before code validation. | Handles varied wording while checking quoted numbers. | Regex-only is brittle; RAG is unnecessary for structured master data. |
 | Local LLM | Ollama runs `qwen3:1.7b` on localhost with JSON-schema output. | Lower CPU latency and privacy: email and quote text stay on this machine during extraction. | Production option: test 8B on a GPU EC2 instance; cloud setup is out of scope. |
 | [Fastify](https://fastify.dev/docs/latest/Reference/TypeScript/) with TypeScript | Serve uploads, review views, approvals, and SSE. | Familiar to run and debug for this prototype. | Python/FastAPI is viable but is not the chosen app stack. |
 | SQLite via [better-sqlite3](https://github.com/WiseLibs/better-sqlite3) | Store requests, decisions, events, messages, and PO results. | Local file; simple transactional access from Node. | Neon/Postgres adds cloud setup; local `node:sqlite` is experimental on the installed Node 24.11. |
@@ -244,7 +262,7 @@ flowchart TD
 
 #### Local model and token budget
 
-`qwen3:1.7b` is the provisional CPU demo model: one email + quote took 16 s; 8B exceeded 150 s. Accuracy still needs testing on edge cases.
+`qwen3:1.7b` is the local CPU demo model. Four live imports here took 30–54 s each. Extraction can still be wrong; deterministic checks and requester confirmation gate approvals.
 
 | Measure | Tokens | Context remaining (%) | Basis |
 | --- | ---: | ---: | --- |
