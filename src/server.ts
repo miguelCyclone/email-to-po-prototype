@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { Repository } from './db/repository.js';
 import { Workflow, FlowError } from './domain/workflow.js';
 import { events } from './live/events.js';
-import { listPage, requestPage, outboxPage } from './views/pages.js';
+import { listPage, requestPage } from './views/pages.js';
 
 const app = Fastify({ logger: true, bodyLimit: 6_000_000 });
 const repo = new Repository();
@@ -29,10 +29,9 @@ app.get('/health', async () => ({ status: 'ok', app: 'procurement-prototype' }))
 app.get('/', async (_request, reply) => reply.type('text/html').send(listPage(repo.list())));
 app.get('/requests', async (_request, reply) => reply.type('text/html').send(listPage(repo.list())));
 app.get('/requests/:id', async (request, reply) => reply.type('text/html').send(requestPage(flow.detail(id(request)))));
-app.get('/outbox', async (_request, reply) => reply.type('text/html').send(outboxPage(repo.outboxList() as Record<string, unknown>[])));
+app.get('/outbox', async (_request, reply) => reply.redirect('/')); // Old bookmark; drafts now live on each request.
 app.get('/api/requests', async () => repo.list());
 app.get('/api/requests/:id', async request => flow.detail(id(request)));
-app.get('/api/outbox', async () => repo.outboxList());
 app.get('/app.css', async (_request, reply) => reply.type('text/css').send(readFileSync(new URL('../web/app.css', import.meta.url))));
 app.get('/app.js', async (_request, reply) => reply.type('application/javascript').send(readFileSync(new URL('../web/app.js', import.meta.url))));
 

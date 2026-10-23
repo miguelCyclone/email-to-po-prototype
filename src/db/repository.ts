@@ -86,7 +86,7 @@ export class Repository {
     this.db.prepare('INSERT INTO outbox_messages(request_id,revision,recipient,subject,body,created_at) VALUES(?,?,?,?,?,?)')
       .run(id, revision, recipient, subject, body, now());
   }
-  outboxList(): unknown[] { return this.db.prepare('SELECT * FROM outbox_messages ORDER BY id DESC').all(); }
+  outboxForRequest(id: string): unknown[] { return this.db.prepare('SELECT * FROM outbox_messages WHERE request_id=? ORDER BY id DESC').all(id); }
   submission(id: string, revision: number): ErpSubmission | undefined { return this.db.prepare('SELECT * FROM erp_submissions WHERE request_id=? AND revision=?').get(id, revision) as ErpSubmission | undefined; }
   createSubmission(id: string, revision: number, payload: string, payloadHash: string, key: string): void {
     const stamp = now();

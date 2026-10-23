@@ -46,7 +46,7 @@ export class Workflow {
     if (!row) throw new FlowError('Request not found', 404);
     return { ...row, draft: JSON.parse(row.draft_json), validated: row.validated_json ? JSON.parse(row.validated_json) : null,
       issues: this.repo.issues(id), approvals: this.repo.approvals(id, row.revision), confirmation: this.repo.getConfirmation(id, row.revision),
-      submission: this.repo.submission(id, row.revision), extraction: this.repo.latestExtraction(id), audit: this.repo.auditTrail(id) };
+      submission: this.repo.submission(id, row.revision), messages: this.repo.outboxForRequest(id), extraction: this.repo.latestExtraction(id), audit: this.repo.auditTrail(id) };
   }
 
   async importEmail(raw: Buffer, externalPdf?: { name: string; content: Buffer }): Promise<Record<string, unknown>> {

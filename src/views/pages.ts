@@ -1,7 +1,7 @@
 import type { RequestRow } from '../../schema/contracts.js';
 
 export function escapeHtml(value: unknown): string { return String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!); }
-const head = (title: string, section: 'requests' | 'outbox' = 'requests'): string => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeHtml(title)} · Procurement demo</title><link rel="stylesheet" href="/app.css"></head><body><header><a href="/">Procurement prototype</a><nav aria-label="Main navigation"><a class="nav-link" href="/" ${section === 'requests' ? 'aria-current="page"' : ''}>Request queue</a><a class="nav-link" href="/outbox" ${section === 'outbox' ? 'aria-current="page"' : ''}>Draft outbox</a></nav></header><main>`;
+const head = (title: string): string => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeHtml(title)} · Procurement demo</title><link rel="stylesheet" href="/app.css"></head><body><header><a href="/">Procurement prototype</a></header><main>`;
 const foot = `</main><footer>Local demo · requester and approver actions are simulated, not authenticated</footer><script src="/app.js" defer></script></body></html>`;
 const stateLabels: Record<string, string> = {
   needs_info: 'Requester info needed', review: 'Needs resolution',
@@ -13,7 +13,7 @@ const badge = (state: string): string => `<span class="badge ${escapeHtml(state)
 export function listPage(rows: RequestRow[]): string {
   return head('Requests') + `<section class="hero"><div><h1>Purchase requests</h1><p>Import an email, review the extracted draft, confirm it, then approve in order.</p></div><div class="pill">Demo only · no verified identity</div></section>
     <section class="card"><h2>Import email</h2><form id="import-form"><label>Email (.eml)<input name="email" type="file" accept=".eml,message/rfc822" required></label><label>Optional quote PDF<input name="pdf" type="file" accept=".pdf,application/pdf"></label><button type="submit">Import and extract</button><p id="import-status" class="muted">Local Ollama may take a minute. The sample quotes are resolved by exact attachment name.</p></form></section>
-    <section class="card"><h2>Queue</h2><p class="muted">Each row is a separate request. Email follow-ups are drafts in Outbox; none are sent.</p><div class="status-guide">
+    <section class="card"><h2>Queue</h2><p class="muted">Each row is a separate request. Open one to see its actions and message drafts.</p><div class="status-guide">
       <div>${badge('review')}<span>Procurement action required before approval.</span></div>
       <div>${badge('needs_info')}<span>Requester supplies missing or corrected facts.</span></div>
       <div>${badge('awaiting_approval')}<span>The next approver decides; no PO yet.</span></div>
@@ -37,6 +37,11 @@ function requiredAction(issue: UiIssue, draft: Record<string, unknown>): { owner
   if (issue.kind === 'reject') return { owner: 'Procurement', action: `Stop this request: ${issue.detail}` };
   return { owner: 'Procurement', action: `Investigate ${issue.field.replaceAll('_', ' ')} against the source documents: ${issue.detail}` };
 }
+type DraftMessage = { revision: number; recipient: string; subject: string; body: string; created_at: string };
+function messageDrafts(messages: DraftMessage[]): string {
+  if (!messages.length) return '';
+  return `<section class="card"><h2>Requester message drafts</h2><p class="muted">Drafts for this request. No email is sent.</p>${messages.map((message, index) => `<details ${index === 0 ? 'open' : ''}><summary>Revision ${escapeHtml(message.revision)} · ${escapeHtml(message.subject)}</summary><p>To: ${escapeHtml(message.recipient)} · ${escapeHtml(message.created_at)}</p><pre>${escapeHtml(message.body)}</pre></details>`).join('')}</section>`;
+}
 export function requestPage(detail: Record<string, unknown>): string {
   const row = detail as unknown as RequestRow;
   const issues = detail.issues as UiIssue[];
@@ -45,6 +50,7 @@ export function requestPage(detail: Record<string, unknown>): string {
   const submission = detail.submission as { po_number: string | null; status: string; response_json: string | null } | null;
   const validated = detail.validated as Record<string, unknown> | null;
   const draft = detail.draft as Record<string, unknown>;
+  const messages = detail.messages as DraftMessage[];
   const current = approvals.find(a => a.decision === 'pending');
   const scriptData = `data-id="${escapeHtml(row.id)}" data-revision="${row.revision}" data-hash="${escapeHtml(row.draft_sha256 ?? '')}"`;
   return head(row.id) + `<section class="hero"><div><a href="/" class="back">← Queue</a><h1>${escapeHtml(row.id)} ${badge(row.state)}</h1><p>${escapeHtml(row.subject)} · ${escapeHtml(row.requester_email)}</p></div><div class="pill">Revision ${row.revision}</div></section>
@@ -59,8 +65,6 @@ export function requestPage(detail: Record<string, unknown>): string {
     <h3>Approval chain</h3>${approvals.length ? `<ol class="steps">${approvals.map(a => `<li><strong>${escapeHtml(a.role)}</strong> · ${escapeHtml(a.approver_employee_id)} — ${escapeHtml(a.decision)}</li>`).join('')}</ol>` : '<p class="muted">Created only after requester confirmation.</p>'}
     ${submission ? `<h3>ERP submission</h3><p>${escapeHtml(submission.status)} ${submission.po_number ? `· ${escapeHtml(submission.po_number)}` : ''}</p>` : ''}</section></div>
     <section class="card"><h2>Draft and procurement correction</h2><p class="muted">Enter facts only after checking the requester reply or updated quote. Each save creates a new revision and clears prior decisions. Data entry is a demo action.</p><form id="correction-form" ${scriptData}><textarea name="draft" spellcheck="false" rows="17">${escapeHtml(jsonPretty(JSON.stringify(draft)))}</textarea><button type="submit" ${['submitting', 'submit_error', 'po_created'].includes(row.state) ? 'disabled' : ''}>Save corrected draft</button></form><p id="action-status" class="muted"></p></section>
+    ${messageDrafts(messages)}
     <section class="card"><details><summary>Extraction and audit</summary><pre>${escapeHtml(JSON.stringify({ extraction: detail.extraction, audit: detail.audit }, null, 2))}</pre></details></section>` + foot;
-}
-export function outboxPage(messages: Record<string, unknown>[]): string {
-  return head('Outbox', 'outbox') + `<section class="hero"><div><h1>Draft outbox</h1><p>Procurement view: preview draft emails addressed to requesters for clarification, confirmation, or rejection. The demo does not send them.</p></div></section>${messages.map(m => `<section class="card"><p><a href="/requests/${escapeHtml(m.request_id)}">${escapeHtml(m.request_id)}</a> · revision ${escapeHtml(m.revision)} · ${escapeHtml(m.created_at)}</p><h2>${escapeHtml(m.subject)}</h2><p>To: ${escapeHtml(m.recipient)}</p><pre>${escapeHtml(m.body)}</pre></section>`).join('') || '<section class="card">No drafts yet.</section>'}` + foot;
 }

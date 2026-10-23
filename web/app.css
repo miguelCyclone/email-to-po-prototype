@@ -3,10 +3,6 @@
 body{margin:0}
 header{display:flex;align-items:center;justify-content:space-between;padding:18px max(24px,calc((100vw - 1160px)/2));background:#fff;border-bottom:1px solid #dfe6eb}
 header a{color:#113f65;text-decoration:none;font-weight:700}
-nav{display:flex;flex-wrap:wrap;gap:8px}
-nav .nav-link{font-weight:600;padding:9px 13px;border:1px solid #cadbe5;border-radius:8px;color:#245875;background:#fff}
-nav .nav-link:hover{background:#e8f2fa}
-nav .nav-link[aria-current=page],nav .nav-link[aria-current=page]:hover{background:#113f65;border-color:#113f65;color:#fff}
 main{max-width:1160px;margin:0 auto;padding:32px 24px 60px}
 .hero{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:24px}
 .hero h1{font-size:2rem;margin:8px 0}
@@ -50,6 +46,6 @@ th{font-size:.82rem;color:#607383;text-transform:uppercase;letter-spacing:.03em}
 footer{text-align:center;color:#80909a;padding:20px}
 @media(max-width:800px){.grid{grid-template-columns:1fr}
 .hero{align-items:flex-start;flex-direction:column}
-header{padding:16px 24px;flex-wrap:wrap;gap:12px}
+header{padding:16px 24px}
 dl{grid-template-columns:125px 1fr}
 }

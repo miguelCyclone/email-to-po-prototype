@@ -30,7 +30,7 @@ npm start                                       # terminal 2
 
 Open **http://127.0.0.1:3000**. Import an `.eml` and optionally a PDF. Named sample PDFs resolve from `docs/quotes-*/quotes/`. For a currently valid end-to-end example, run `npm run demo-email` and import `data/demo_current.eml` (stable `Message-ID` for the day). Confirm the draft, approve each shown step, then create the PO. The supplied dated quotes are expired as of 2026-10-22, so they should stop in review.
 
-- Clarifications, confirmations, and rejection notices appear in **Outbox** as drafts. They are not sent.
+- Open a request to see its clarification, confirmation, and rejection message drafts. They are not sent.
 - Requester and approver clicks are simulated; there is no login or verified identity.
 - [Video walkthrough](demo/walkthrough.mp4): 42-second silent, captioned run through confirmation, ordered approvals, PO creation, and an expired-quote hold.
 
@@ -276,7 +276,7 @@ flowchart TD
         PDF -->|Quote text| Extract
         Extract -->|Draft fields| Rules[Schema checks and workflow rules]
         UI[Server-rendered web UI] <-->|State and actions| Rules
-        Rules -->|Clarification draft| Notify[Clarification draft outbox]
+        Rules -->|Requester message draft| Notify[Stored message drafts]
     end
     Extract <-->|Prompt and JSON| LLM[Ollama: qwen3:1.7b]
     Master[master_data.json] -->|Reference data| Rules
@@ -284,7 +284,7 @@ flowchart TD
     Procurement[Procurement] -->|Review and corrections| UI
     Requester -->|Simulated draft confirmation| UI
     Approvers[Approvers] -->|Decisions| UI
-    Notify -.->|Draft preview only| Requester
+    Notify -->|Shown on request detail| UI
     Rules -->|Approved PO and key| ERP[Python mock PO API]
 ```
 
@@ -297,7 +297,7 @@ flowchart TD
 | [Fastify](https://fastify.dev/docs/latest/Reference/TypeScript/) with TypeScript | Serve uploads, review views, approvals, and SSE. | Familiar to run and debug for this prototype. | Python/FastAPI is viable but is not the chosen app stack. |
 | SQLite via [better-sqlite3](https://github.com/WiseLibs/better-sqlite3) | Store requests, decisions, events, messages, and PO results. | Local file; simple transactional access from Node. | Neon/Postgres adds cloud setup; local `node:sqlite` is experimental on the installed Node 24.11. |
 | Money and FX | Use [decimal.js](https://github.com/MikeMcl/decimal.js); store CHF cents as integers. | Avoids floating-point errors at approval thresholds. | Native JavaScript numbers are not suitable for money. |
-| Clarifications and confirmation | Draft requester messages in a demo outbox; show the requisition summary in a requester view. | Demonstrable without outbound mail or login. | Production confirmation needs verified identity and delivery. |
+| Clarifications and confirmation | Store requester message drafts and show them with each request; simulate confirmation there. | One place for state, actions, and communication. | Production confirmation needs verified identity and delivery. |
 | Python mock ERP | POST approved orders with a stable `Idempotency-Key`; use `?strict=1` only when applicable. | Supplied API stays as a separate local Python process; retry the exact payload/key. | Real ERP is outside the challenge. |
 
 #### Local model and token budget
@@ -317,7 +317,7 @@ Estimates use ~4 characters/token plus 400 instruction and 1,100 output tokens. 
 
 **User channels and identity**
 
-- Requesters: email intake; draft summary in the demo outbox; simulated confirmation in a requester view.
-- Procurement and approvers: web views; approvals recorded by role.
+- Requesters: email intake; simulated confirmation on the request detail page.
+- Procurement and approvers: request queue and detail page; approvals recorded by role.
 - Identity: no login or verified requester identity in the demo; production confirmation needs authentication.
-- Channel choice: the brief specifies no approval channel or mail service; web views and outbox are prototype choices.
+- Channel choice: the brief specifies no approval channel or mail service; the web view and stored message drafts are prototype choices.
