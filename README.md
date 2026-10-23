@@ -42,7 +42,11 @@ Open **http://127.0.0.1:3000**. Import an `.eml` and optionally a PDF. Named sam
 | `npm test` | 15 tests: validation, CHF approval chain and PO gate, reply/revision reset, PDF limits, model failure, stale dates, and ERP retry/idempotency. External LLM and ERP calls are mocked. |
 | `npm run check-samples` | Parses all 48 supplied emails and 21 PDFs; does not score extraction accuracy. |
 
-**Evaluation metrics (not yet measured):** Field-level precision and recall on a hand-labeled subset, plus p50/p95 latency from import to validation state. nDCG@k does not apply: there is no retrieval or ranking stage.
+**Evaluation metrics (not yet measured):**
+
+- Field-level precision and recall on a hand-labeled subset.
+- p50/p95 latency from import to validation state.
+- nDCG@k: not applicable; no retrieval or ranking stage.
 
 **Out of scope for this rapid prototype:** exhaustive human exception paths (such as approver clarification and replacement quote upload), browser click tests, real email delivery or identity, and a scored LLM evaluation across all samples.
 
