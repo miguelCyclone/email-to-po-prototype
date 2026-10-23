@@ -53,7 +53,16 @@ A new email with a new `Message-ID` and no request/thread reference is a new req
 | `npm run check-samples` | Parses all 48 supplied emails and 21 PDFs; does not score extraction accuracy. |
 | `npm run eval-extraction` | Ten hand-labeled emails, including two PDF quotes, through local Ollama. Checks supplier, cost centre, dates, currency, totals, and line items. Exits nonzero on mismatches. |
 
-**Extraction baseline (2026-10-23, `qwen3:1.7b`):** 4/10 cases passed. Failures: emails 02, 04, 08, 12, 13, and 26. Errors include invented placeholders, incorrect quantities, and date formatting. This is a small quality check, not a measured production accuracy rate.
+### Extraction accuracy: 10 live tests
+
+Run `npm run eval-extraction`. The tests compare extracted fields against manually labeled sample emails; two include PDFs.
+
+| Local baseline, 2026-10-23 (`qwen3:1.7b`) | Emails |
+| --- | --- |
+| Pass: 4/10 | 01, 05, 06, 14 |
+| Fail: 6/10 | 02, 04, 08, 12, 13, 26 |
+
+Failures include invented values, incorrect quantities, and a date format error. This sample is too small to claim overall model accuracy.
 
 **Evaluation metrics (not yet measured):**
 
