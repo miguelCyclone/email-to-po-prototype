@@ -1,7 +1,7 @@
 import type { RequestRow } from '../../schema/contracts.js';
 
 export function escapeHtml(value: unknown): string { return String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!); }
-const head = (title: string): string => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeHtml(title)} · Procurement demo</title><link rel="stylesheet" href="/app.css"></head><body><header><a href="/">Procurement prototype</a><nav><a href="/">Requests</a><a href="/outbox">Outbox</a></nav></header><main>`;
+const head = (title: string, section: 'requests' | 'outbox' = 'requests'): string => `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>${escapeHtml(title)} · Procurement demo</title><link rel="stylesheet" href="/app.css"></head><body><header><a href="/">Procurement prototype</a><nav aria-label="Main navigation"><a class="nav-link" href="/" ${section === 'requests' ? 'aria-current="page"' : ''}>Request queue</a><a class="nav-link" href="/outbox" ${section === 'outbox' ? 'aria-current="page"' : ''}>Draft outbox</a></nav></header><main>`;
 const foot = `</main><footer>Local demo · requester and approver actions are simulated, not authenticated</footer><script src="/app.js" defer></script></body></html>`;
 const stateLabels: Record<string, string> = {
   needs_info: 'Requester info needed', review: 'Needs resolution',
@@ -62,5 +62,5 @@ export function requestPage(detail: Record<string, unknown>): string {
     <section class="card"><details><summary>Extraction and audit</summary><pre>${escapeHtml(JSON.stringify({ extraction: detail.extraction, audit: detail.audit }, null, 2))}</pre></details></section>` + foot;
 }
 export function outboxPage(messages: Record<string, unknown>[]): string {
-  return head('Outbox') + `<section class="hero"><div><h1>Draft outbox</h1><p>Messages are previews. No email is sent.</p></div></section>${messages.map(m => `<section class="card"><p><a href="/requests/${escapeHtml(m.request_id)}">${escapeHtml(m.request_id)}</a> · revision ${escapeHtml(m.revision)} · ${escapeHtml(m.created_at)}</p><h2>${escapeHtml(m.subject)}</h2><p>To: ${escapeHtml(m.recipient)}</p><pre>${escapeHtml(m.body)}</pre></section>`).join('') || '<section class="card">No drafts yet.</section>'}` + foot;
+  return head('Outbox', 'outbox') + `<section class="hero"><div><h1>Draft outbox</h1><p>Clarification, confirmation, and rejection message drafts. No email is sent.</p></div></section>${messages.map(m => `<section class="card"><p><a href="/requests/${escapeHtml(m.request_id)}">${escapeHtml(m.request_id)}</a> · revision ${escapeHtml(m.revision)} · ${escapeHtml(m.created_at)}</p><h2>${escapeHtml(m.subject)}</h2><p>To: ${escapeHtml(m.recipient)}</p><pre>${escapeHtml(m.body)}</pre></section>`).join('') || '<section class="card">No drafts yet.</section>'}` + foot;
 }
