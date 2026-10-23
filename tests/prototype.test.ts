@@ -34,6 +34,18 @@ test('validation rejects missing, inconsistent, inactive and expired facts', () 
   assert.ok(validateDraft(negative, new Date()).issues.some(i => i.code === 'invalid'));
 });
 
+test('incomplete line values do not create a false total mismatch or procurement review', () => {
+  const extracted = draft();
+  extracted.line_items[0].quantity = 'Yes';
+  extracted.stated_total = '999.00';
+  extracted.requested_delivery_date = null;
+  const result = validateDraft(extracted, new Date());
+  assert.equal(result.value, null);
+  assert.ok(result.issues.some(issue => issue.field === 'line_items[1].quantity' && issue.kind === 'requester'));
+  assert.ok(!result.issues.some(issue => issue.field === 'total' || issue.field === 'stated_total'));
+  assert.ok(result.issues.every(issue => issue.kind === 'requester'));
+});
+
 test('CHF approval tiers, duplicate approver collapse and self approval hold', () => {
   const value = validateDraft(draft(), new Date()).value!;
   for (const [minor, count] of [[100000, 1], [100001, 2], [1000000, 2], [1000001, 3], [5000001, 4], [25000001, 5]]) {

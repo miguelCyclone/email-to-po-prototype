@@ -49,7 +49,7 @@ A new email with a new `Message-ID` and no request/thread reference is a new req
 | Command | Coverage |
 | --- | --- |
 | `npm run check` | TypeScript type check. |
-| `npm test` | 16 tests: validation, CHF approval chain and PO gate, email deduplication, reply/revision reset, PDF limits, model failure, stale dates, and ERP retry/idempotency. External LLM and ERP calls are mocked. |
+| `npm test` | 17 tests: validation, CHF approval chain and PO gate, email deduplication, reply/revision reset, PDF limits, model failure, stale dates, and ERP retry/idempotency. External LLM and ERP calls are mocked. |
 | `npm run check-samples` | Parses all 48 supplied emails and 21 PDFs; does not score extraction accuracy. |
 | `npm run eval-extraction` | Ten hand-labeled emails, including two PDF quotes, through local Ollama. Checks supplier, cost centre, dates, currency, totals, and line items. Exits nonzero on mismatches. |
 
@@ -212,7 +212,7 @@ All 21 supplied PDFs fit the proposed limits (maximum: 2 pages, 5,810 bytes). If
 | Cost centre | Approvals | Resolve owner and department; missing or unknown → requester clarification. | `cost_centers[]`; `departments[]`; optional to mock API |
 | Line items | PO | Nonempty; each needs `item_name`, `quantity > 0`, `unit_price ≥ 0`, and `unit`. | Email/quote; mock API; no unit list or upper limits supplied |
 | Currency and FX | PO + approvals | CHF, EUR, USD, or GBP; convert total to CHF. | Mock API; `_meta.fx_rates_to_chf` |
-| Total | PO + approvals | Finite; reconcile lines, tax, freight, and discounts. Unexplained difference → review. | Email/quote; mock API only warns on mismatches |
+| Total | PO + approvals | Reconcile only after all numeric lines and charges are valid. Unexplained difference → review. | Email/quote; mock API only warns on mismatches |
 | Delivery date | PO | Require a real `YYYY-MM-DD` date; clarify vague or missing dates. | Email/quote; mock API checks format only |
 | Quote | If supplied | Check supplier, items, prices, total, and expiry. Inline requests may lack a quote. | PDF; expiry is not a mock API field |
 | Tax, GL account, item code | Optional PO fields | Numeric tax; known GL code; free-text `item_code`. | Mock API; `gl_accounts[]`; no item catalog |

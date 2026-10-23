@@ -74,6 +74,7 @@ export function validateDraft(draft: Draft, now: Date): { value: Validated | nul
   if (!Array.isArray(draft.line_items) || !draft.line_items.length) add('line_items', 'missing', 'At least one priced line item is required.', 'requester');
   const lines: Validated['line_items'] = [];
   let subtotal = new Decimal(0);
+  let canCalculateTotal = Array.isArray(draft.line_items) && draft.line_items.length > 0;
   for (const [index, line] of (draft.line_items ?? []).entries()) {
     const label = `line_items[${index + 1}]`;
     if (!present(line.item_name)) add(`${label}.item_name`, 'missing', 'Item name is required.', 'requester');
@@ -84,6 +85,7 @@ export function validateDraft(draft: Draft, now: Date): { value: Validated | nul
     const price = present(line.unit_price) ? money(line.unit_price) : null;
     if (present(line.quantity) && (!qty || !qty.greaterThan(0))) add(`${label}.quantity`, 'invalid', 'Quantity must be positive.', 'requester');
     if (present(line.unit_price) && !price) add(`${label}.unit_price`, 'invalid', 'Unit price must be nonnegative.', 'requester');
+    if (!qty?.greaterThan(0) || !price) canCalculateTotal = false;
     if (qty && price) subtotal = subtotal.plus(qty.times(price));
     if (present(line.item_name) && present(line.unit) && qty?.greaterThan(0) && price) lines.push({ item_name: line.item_name.trim(), quantity: qty.toString(), unit: line.unit.trim(), unit_price: price.toFixed(2), ...(present(line.item_code) ? { item_code: line.item_code.trim() } : {}) });
   }
@@ -93,17 +95,17 @@ export function validateDraft(draft: Draft, now: Date): { value: Validated | nul
     const raw = draft[field];
     if (present(raw)) {
       const parsed = money(raw);
-      if (!parsed) add(field, 'invalid', `${field} must be nonnegative.`, 'requester');
+      if (!parsed) { add(field, 'invalid', `${field} must be nonnegative.`, 'requester'); canCalculateTotal = false; }
       else charges[field] = parsed;
     }
   }
   const computed = subtotal.plus(charges.tax_amount).plus(charges.freight_amount).minus(charges.discount_amount);
-  if (computed.lessThanOrEqualTo(0)) add('total', 'invalid', 'Total must be positive.', 'requester');
+  if (canCalculateTotal && computed.lessThanOrEqualTo(0)) add('total', 'invalid', 'Total must be positive.', 'requester');
   let stated: Decimal | null = null;
   if (present(draft.stated_total)) {
     stated = money(draft.stated_total);
     if (!stated) add('stated_total', 'invalid', 'Stated total must be nonnegative.', 'requester');
-    else if (stated.minus(computed).abs().greaterThan(0.01)) add('stated_total', 'mismatch', `Stated total ${stated.toFixed(2)} differs from calculated total ${computed.toFixed(2)}.`, 'procurement');
+    else if (canCalculateTotal && stated.minus(computed).abs().greaterThan(0.01)) add('stated_total', 'mismatch', `Stated total ${stated.toFixed(2)} differs from calculated total ${computed.toFixed(2)}.`, 'procurement');
   }
   if (issues.length || !supplier || !cc || !currency || !draft.requested_delivery_date) return { value: null, issues };
   const total = computed.toDecimalPlaces(2, Decimal.ROUND_HALF_UP);
