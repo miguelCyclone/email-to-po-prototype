@@ -23,15 +23,16 @@ Requirements: Node.js 24+, Python 3, Poppler (`pdfinfo`, `pdftotext`; `pdfunite`
 ```bash
 npm install
 ollama pull qwen3:1.7b              # once, if missing
-python3 mock_po_api.py              # terminal 1
-npm start                           # terminal 2
+mkdir -p data
+python3 mock_po_api.py 8080 data/mock_orders.json  # terminal 1
+npm start                                       # terminal 2
 ```
 
-Open **http://127.0.0.1:3000**. Import an `.eml` and optionally a PDF. Named sample PDFs resolve from `docs/quotes-*/quotes/`. For a currently valid end-to-end example, run `npm run demo-email` and import `data/demo_current.eml`. Confirm the draft, approve each shown step, then create the PO. The supplied dated quotes are expired as of 2026-10-22, so they should stop in review.
+Open **http://127.0.0.1:3000**. Import an `.eml` and optionally a PDF. Named sample PDFs resolve from `docs/quotes-*/quotes/`. For a currently valid end-to-end example, run `npm run demo-email` and import `data/demo_current.eml` (stable `Message-ID` for the day). Confirm the draft, approve each shown step, then create the PO. The supplied dated quotes are expired as of 2026-10-22, so they should stop in review.
 
 - Clarifications, confirmations, and rejection notices appear in **Outbox** as drafts. They are not sent.
-- A reply containing the `REQ-XXXXXXXX` reference updates that request. Corrections create a new revision and reset decisions.
-- Reimporting the same email returns its existing request (raw hash or sender + `Message-ID`). Reused IDs with changed content are blocked for manual review; a new `Message-ID` is a separate request. Earlier demo duplicates remain in local history.
+- A reply with a `REQ-XXXXXXXX` reference or `In-Reply-To` header updates that request. Corrections create a new revision and reset decisions.
+- Reimporting the same email returns its existing request (raw hash or sender + `Message-ID`). Reused IDs with changed content are blocked for manual review. A new email without a `REQ` or `In-Reply-To` reference starts a separate request.
 - Requester and approver clicks are simulated; there is no login or verified identity.
 - [Video walkthrough](demo/walkthrough.mp4): 42-second silent, captioned run through confirmation, ordered approvals, PO creation, and an expired-quote hold.
 
@@ -53,7 +54,7 @@ Open **http://127.0.0.1:3000**. Import an `.eml` and optionally a PDF. Named sam
 
 ## Mock ERP boundary
 
-The [mock PO API](mock_po_api.py) books valid POSTs without checking approvals. It also accepts negative amounts, invalid dates, and inconsistent totals. The prototype must catch these issues, enforce approvals, and use a stable idempotency key before posting. Production would need authentication, restricted CORS, API-side approval enforcement, and durable storage.
+The app freezes each ERP payload and its `blp-<request>-<revision>-<payload hash>` key, then resends that exact pair on retry. The [mock PO API](mock_po_api.py) returns the same PO for a repeated `Idempotency-Key`, but does not enforce approvals or all amount, date, and total checks. The app enforces them before POST. Production would need authentication, restricted CORS, API-side approval enforcement, and durable storage.
 
 ## Current process and sources of truth
 

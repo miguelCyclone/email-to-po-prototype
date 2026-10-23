@@ -57,8 +57,11 @@ export class Workflow {
     const contentHash = emailContentHash(mail);
     const previous = this.duplicateEmail(mail, sourceHash, contentHash);
     if (previous) return this.detail(previous);
-    const replyId = `${mail.subject}\n${mail.body}`.match(/REQ-[A-F0-9]{8}/i)?.[0].toUpperCase();
-    if (replyId && this.repo.get(replyId)) return this.importReply(replyId, mail, raw, sourceHash, contentHash);
+    const statedId = `${mail.subject}\n${mail.body}`.match(/REQ-[A-F0-9]{8}/i)?.[0].toUpperCase();
+    const threadId = mail.inReplyTo ? this.repo.findEmailByIdentity(mail.sender, mail.inReplyTo)?.request_id : undefined;
+    if (statedId && threadId && statedId !== threadId) throw new FlowError('Request reference conflicts with In-Reply-To; procurement must review it.');
+    const replyId = statedId && this.repo.get(statedId) ? statedId : threadId;
+    if (replyId) return this.importReply(replyId, mail, raw, sourceHash, contentHash);
     const id = `REQ-${randomUUID().slice(0, 8).toUpperCase()}`;
     const folder = resolve('data/uploads', id);
     const raced = this.repo.transaction(() => {

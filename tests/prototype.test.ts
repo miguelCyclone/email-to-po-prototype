@@ -155,7 +155,7 @@ test('quote evidence repairs an invalid small-model quantity and exposes expiry'
   assert.ok(validateDraft(fixed, new Date('2026-10-22T12:00:00Z')).issues.some(i => i.code === 'expired_quote'));
 });
 
-test('requester reply with request ID updates the same request and clears known missing field', async () => {
+test('requester reply via In-Reply-To updates the same request once and clears a missing field', async () => {
   const repo = new Repository(':memory:');
   const flow = new Workflow(repo);
   let calls = 0;
@@ -167,15 +167,15 @@ test('requester reply with request ID updates the same request and clears known 
   });
   server.listen(0, '127.0.0.1'); await once(server, 'listening');
   process.env.OLLAMA_URL = `http://127.0.0.1:${(server.address() as { port: number }).port}/api/generate`;
-  const email = (subject: string, body: string, messageId: string, transport = 'one'): Buffer => Buffer.from(`From: Tobias Weber <tobias.weber@customer.com>\nTo: procurement@customer.com\nSubject: ${subject}\nDate: Thu, 22 Oct 2026 10:00:00 +0200\nMessage-ID: <${messageId}>\nX-Transport-Copy: ${transport}\nContent-Type: text/plain; charset=utf-8\n\n${body}\n`);
+  const email = (subject: string, body: string, messageId: string, transport = 'one', inReplyTo?: string): Buffer => Buffer.from(`From: Tobias Weber <tobias.weber@customer.com>\nTo: procurement@customer.com\nSubject: ${subject}\nDate: Thu, 22 Oct 2026 10:00:00 +0200\nMessage-ID: <${messageId}>\n${inReplyTo ? `In-Reply-To: <${inReplyTo}>\n` : ''}X-Transport-Copy: ${transport}\nContent-Type: text/plain; charset=utf-8\n\n${body}\n`);
   try {
     const first = await flow.importEmail(email('Missing date', 'Please order relays.', 'original@customer.com'));
     assert.equal(first.state, 'needs_info');
-    const reply = await flow.importEmail(email(`Re: ${first.id}`, `Delivery date is ${future}.`, 'reply@customer.com'));
+    const reply = await flow.importEmail(email('Re: Missing date', `Delivery date is ${future}.`, 'reply@customer.com', 'one', 'original@customer.com'));
     assert.equal(reply.id, first.id);
     assert.equal(reply.revision, 2);
     assert.equal(reply.state, 'awaiting_confirmation');
-    const replay = await flow.importEmail(email(`Re: ${first.id}`, `Delivery date is ${future}.`, 'reply@customer.com', 'two'));
+    const replay = await flow.importEmail(email('Re: Missing date', `Delivery date is ${future}.`, 'reply@customer.com', 'two', 'original@customer.com'));
     assert.equal(replay.revision, 2);
     assert.equal(calls, 2); // duplicate reply did not run extraction again
     assert.equal(repo.list().length, 1);
