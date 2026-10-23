@@ -29,11 +29,20 @@ npm start                           # terminal 2
 
 Open **http://127.0.0.1:3000**. Import an `.eml` and optionally a PDF. Named sample PDFs resolve from `docs/quotes-*/quotes/`. For a currently valid end-to-end example, run `npm run demo-email` and import `data/demo_current.eml`. Confirm the draft, approve each shown step, then create the PO. The supplied dated quotes are expired as of 2026-10-22, so they should stop in review.
 
-- `npm run check` — TypeScript; `npm test` — workflow gates; `npm run check-samples` — parse all supplied emails and PDFs.
 - Clarifications, confirmations, and rejection notices appear in **Outbox** as drafts. They are not sent.
 - A reply containing the `REQ-XXXXXXXX` reference updates that request. Corrections create a new revision and reset decisions.
 - Requester and approver clicks are simulated; there is no login or verified identity.
 - [Video walkthrough](demo/walkthrough.mp4): 42-second silent, captioned run through confirmation, ordered approvals, PO creation, and an expired-quote hold.
+
+## Test bench
+
+| Command | Coverage |
+| --- | --- |
+| `npm run check` | TypeScript type check. |
+| `npm test` | 15 tests: validation, CHF approval chain and PO gate, reply/revision reset, PDF limits, model failure, stale dates, and ERP retry/idempotency. External LLM and ERP calls are mocked. |
+| `npm run check-samples` | Parses all 48 supplied emails and 21 PDFs; does not score extraction accuracy. |
+
+**Out of scope for this rapid prototype:** exhaustive human exception paths (such as approver clarification and replacement quote upload), browser click tests, real email delivery or identity, and a scored LLM evaluation across all samples.
 
 ## Mock ERP boundary
 
