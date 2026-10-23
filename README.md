@@ -293,7 +293,7 @@ flowchart TD
 | Email intake | Upload and parse `.eml` with [MailParser](https://nodemailer.com/extras/mailparser/); correlate replies by request ID. | Handles MIME and attachments in the Node app. | Python parser only if a sample needs it; live mailbox needs credentials. |
 | PDF text | Use `pdftotext -layout`; review unreadable files. | All 21 sample PDFs have extractable text. | OCR is for scanned PDFs; send those to manual review in this prototype. |
 | Field extraction | Ollama drafts fields; a PDF parser reconciles quote dates, rows, totals, and tax before code validation. | Handles varied wording while checking quoted numbers. | Regex-only is brittle; RAG is unnecessary for structured master data. |
-| Local LLM | Ollama runs `qwen3:1.7b` on localhost with JSON-schema output. | Lower CPU latency and privacy: email and quote text stay on this machine during extraction. | Production option: test 8B on a GPU EC2 instance; cloud setup is out of scope. |
+| Local LLM | Ollama runs `qwen3:1.7b` on localhost with JSON-schema output. | Fits the local CPU demo and keeps email and quote text private. | MVP plan: deploy `qwen3:8b-q4_K_M` on GPU-backed EC2 for testing; accuracy and latency there are unmeasured. |
 | [Fastify](https://fastify.dev/docs/latest/Reference/TypeScript/) with TypeScript | Serve uploads, review views, approvals, and SSE. | Familiar to run and debug for this prototype. | Python/FastAPI is viable but is not the chosen app stack. |
 | SQLite via [better-sqlite3](https://github.com/WiseLibs/better-sqlite3) | Store requests, decisions, events, messages, and PO results. | Local file; simple transactional access from Node. | Neon/Postgres adds cloud setup; local `node:sqlite` is experimental on the installed Node 24.11. |
 | Money and FX | Use [decimal.js](https://github.com/MikeMcl/decimal.js); store CHF cents as integers. | Avoids floating-point errors at approval thresholds. | Native JavaScript numbers are not suitable for money. |
@@ -302,7 +302,7 @@ flowchart TD
 
 #### Local model and token budget
 
-`qwen3:1.7b` remains the local CPU demo model. The ten-case extraction test took 17–75 s per email and passed 4/10; see [test results](#extraction-accuracy-10-live-tests). The 3B and 8B probes do not establish a better replacement. Code checks and requester confirmation gate approvals.
+Demo decision: keep `qwen3:1.7b` although only 4/10 cases passed the ten-case test (17–75 s per email). The 3B and 8B probes exceeded the local 90 s limit on some cases; see [test results](#extraction-accuracy-10-live-tests). For an MVP, test `qwen3:8b-q4_K_M` on GPU-backed EC2 and remeasure accuracy and latency. Code checks and requester confirmation gate approvals.
 
 | Measure | Tokens | Context remaining (%) | Basis |
 | --- | ---: | ---: | --- |
