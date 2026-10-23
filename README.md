@@ -35,7 +35,7 @@ Open **http://127.0.0.1:3000**. Import an `.eml` and optionally a PDF. Named sam
 
 ### Video walkthrough
 
-[![Watch the prototype walkthrough on YouTube](https://i.ytimg.com/vi/ZehM88GtfzM/hqdefault.jpg)](https://youtu.be/ZehM88GtfzM)
+[![Watch the prototype walkthrough on YouTube](demo/video-preview.png)](https://youtu.be/ZehM88GtfzM)
 
 ## Duplicate protection
 
