@@ -32,7 +32,10 @@ Open **http://127.0.0.1:3000**. Import an `.eml` and optionally a PDF. Named sam
 
 - Open a request to see its clarification, confirmation, and rejection message drafts. They are not sent.
 - Requester and approver clicks are simulated; there is no login or verified identity.
-- [Video walkthrough](https://youtu.be/ZehM88GtfzM).
+
+### Video walkthrough
+
+[![Watch the prototype walkthrough on YouTube](https://i.ytimg.com/vi/ZehM88GtfzM/hqdefault.jpg)](https://youtu.be/ZehM88GtfzM)
 
 ## Duplicate protection
 
