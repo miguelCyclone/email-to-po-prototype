@@ -9,7 +9,8 @@
     "check": "tsc --noEmit",
     "test": "node --import tsx --test tests/*.test.ts",
     "demo-email": "tsx scripts/demoEmail.ts",
-    "check-samples": "tsx scripts/checkSamples.ts"
+    "check-samples": "tsx scripts/checkSamples.ts",
+    "eval-extraction": "node --import tsx --test eval/extraction.test.ts"
   },
   "dependencies": {
     "better-sqlite3": "12.2.0",
