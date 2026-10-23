@@ -111,6 +111,27 @@ test('MIME parsing and oversized PDF guard', async () => {
   await assert.rejects(readPdf(Buffer.alloc(2_000_001)), PdfLimitError);
 });
 
+test('Message-ID deduplicates transport replays and backfills old imports', async () => {
+  const repo = new Repository(':memory:');
+  const email = (messageId: string, replay: string, body = 'Please order relays.\n[Attachment: absent.pdf]'): Buffer =>
+    Buffer.from(`From: Tobias Weber <tobias.weber@customer.com>\nTo: procurement@customer.com\nSubject: Relay request\nDate: Thu, 22 Oct 2026 10:00:00 +0200\nMessage-ID: <${messageId}>\nX-Demo-Replay: ${replay}\nContent-Type: text/plain; charset=utf-8\n\n${body}\n`);
+  try {
+    const firstRaw = email('same@customer.com', 'one');
+    const first = await new Workflow(repo).importEmail(firstRaw);
+    assert.equal((await new Workflow(repo).importEmail(firstRaw)).id, first.id);
+    repo.db.exec('DELETE FROM email_identities'); // simulate a database created before Message-ID indexing
+    const flow = new Workflow(repo);
+    const replay = await flow.importEmail(email('same@customer.com', 'two'));
+    assert.equal(replay.id, first.id);
+    assert.equal(replay.revision, first.revision);
+    assert.equal(repo.list().length, 1);
+    const separate = await flow.importEmail(email('new@customer.com', 'three'));
+    assert.notEqual(separate.id, first.id); // identical wording can be a new purchase
+    assert.equal(repo.list().length, 2);
+    await assert.rejects(flow.importEmail(email('same@customer.com', 'four', 'Different request.')), /Message-ID was reused/);
+  } finally { repo.close(); }
+});
+
 test('quote evidence repairs an invalid small-model quantity and exposes expiry', async () => {
   const { execFileSync } = await import('node:child_process');
   const { reconcileQuote, quoteFacts } = await import('../src/extraction/quoteFacts.js');
@@ -146,14 +167,17 @@ test('requester reply with request ID updates the same request and clears known 
   });
   server.listen(0, '127.0.0.1'); await once(server, 'listening');
   process.env.OLLAMA_URL = `http://127.0.0.1:${(server.address() as { port: number }).port}/api/generate`;
-  const email = (subject: string, body: string): Buffer => Buffer.from(`From: Tobias Weber <tobias.weber@customer.com>\nTo: procurement@customer.com\nSubject: ${subject}\nDate: Thu, 22 Oct 2026 10:00:00 +0200\nContent-Type: text/plain; charset=utf-8\n\n${body}\n`);
+  const email = (subject: string, body: string, messageId: string, transport = 'one'): Buffer => Buffer.from(`From: Tobias Weber <tobias.weber@customer.com>\nTo: procurement@customer.com\nSubject: ${subject}\nDate: Thu, 22 Oct 2026 10:00:00 +0200\nMessage-ID: <${messageId}>\nX-Transport-Copy: ${transport}\nContent-Type: text/plain; charset=utf-8\n\n${body}\n`);
   try {
-    const first = await flow.importEmail(email('Missing date', 'Please order relays.'));
+    const first = await flow.importEmail(email('Missing date', 'Please order relays.', 'original@customer.com'));
     assert.equal(first.state, 'needs_info');
-    const reply = await flow.importEmail(email(`Re: ${first.id}`, `Delivery date is ${future}.`));
+    const reply = await flow.importEmail(email(`Re: ${first.id}`, `Delivery date is ${future}.`, 'reply@customer.com'));
     assert.equal(reply.id, first.id);
     assert.equal(reply.revision, 2);
     assert.equal(reply.state, 'awaiting_confirmation');
+    const replay = await flow.importEmail(email(`Re: ${first.id}`, `Delivery date is ${future}.`, 'reply@customer.com', 'two'));
+    assert.equal(replay.revision, 2);
+    assert.equal(calls, 2); // duplicate reply did not run extraction again
     assert.equal(repo.list().length, 1);
   } finally { delete process.env.OLLAMA_URL; server.close(); repo.close(); }
 });

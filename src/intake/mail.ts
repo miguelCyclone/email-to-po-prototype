@@ -1,6 +1,11 @@
+import { createHash } from 'node:crypto';
 import { simpleParser } from 'mailparser';
 
-export type ParsedMail = { sender: string; subject: string; receivedAt: string; body: string; attachments: { name: string; content: Buffer }[]; referenceNames: string[] };
+export type ParsedMail = { sender: string; messageId: string | null; subject: string; receivedAt: string; body: string; attachments: { name: string; content: Buffer }[]; referenceNames: string[] };
+export const emailContentHash = (mail: ParsedMail): string => createHash('sha256').update(JSON.stringify({
+  sender: mail.sender, subject: mail.subject, body: mail.body,
+  attachments: mail.attachments.map(a => [a.name, createHash('sha256').update(a.content).digest('hex')])
+})).digest('hex');
 export async function parseMail(raw: Buffer): Promise<ParsedMail> {
   const parsed = await simpleParser(raw);
   const sender = parsed.from?.value[0]?.address?.toLowerCase() ?? '';
@@ -8,6 +13,7 @@ export async function parseMail(raw: Buffer): Promise<ParsedMail> {
   const body = parsed.text ?? '';
   return {
     sender,
+    messageId: parsed.messageId?.trim().replace(/^<|>$/g, '') || null,
     subject: parsed.subject ?? '(no subject)',
     receivedAt: parsed.date?.toISOString() ?? new Date().toISOString(),
     body,

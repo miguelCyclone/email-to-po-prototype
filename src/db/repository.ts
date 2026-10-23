@@ -19,6 +19,16 @@ export class Repository {
   list(): RequestRow[] { return this.db.prepare('SELECT * FROM requests ORDER BY updated_at DESC').all() as RequestRow[]; }
   get(id: string): RequestRow | undefined { return this.db.prepare('SELECT * FROM requests WHERE id=?').get(id) as RequestRow | undefined; }
   findEmailByHash(hash: string): string | undefined { return (this.db.prepare("SELECT request_id FROM source_documents WHERE kind='email' AND sha256=? LIMIT 1").get(hash) as { request_id: string } | undefined)?.request_id; }
+  findEmailByIdentity(sender: string, messageId: string): { request_id: string; content_sha256: string } | undefined {
+    return this.db.prepare('SELECT request_id,content_sha256 FROM email_identities WHERE sender=? AND message_id=?').get(sender, messageId) as { request_id: string; content_sha256: string } | undefined;
+  }
+  recordEmailIdentity(sender: string, messageId: string, contentHash: string, requestId: string, ignoreExisting = false): void {
+    this.db.prepare(`INSERT ${ignoreExisting ? 'OR IGNORE ' : ''}INTO email_identities(sender,message_id,content_sha256,request_id) VALUES(?,?,?,?)`)
+      .run(sender, messageId, contentHash, requestId);
+  }
+  storedEmails(): { request_id: string; file_name: string }[] {
+    return this.db.prepare("SELECT request_id,file_name FROM source_documents WHERE kind='email' ORDER BY id DESC").all() as { request_id: string; file_name: string }[];
+  }
   create(input: { id: string; requester_email: string; subject: string; received_at: string; draft_json: string; state: State }): void {
     const stamp = now();
     this.db.prepare('INSERT INTO requests(id, requester_email, subject, received_at, draft_json, state, created_at, updated_at) VALUES(?,?,?,?,?,?,?,?)')

@@ -31,6 +31,7 @@ Open **http://127.0.0.1:3000**. Import an `.eml` and optionally a PDF. Named sam
 
 - Clarifications, confirmations, and rejection notices appear in **Outbox** as drafts. They are not sent.
 - A reply containing the `REQ-XXXXXXXX` reference updates that request. Corrections create a new revision and reset decisions.
+- Reimporting the same email returns its existing request (raw hash or sender + `Message-ID`). Reused IDs with changed content are blocked for manual review; a new `Message-ID` is a separate request. Earlier demo duplicates remain in local history.
 - Requester and approver clicks are simulated; there is no login or verified identity.
 - [Video walkthrough](demo/walkthrough.mp4): 42-second silent, captioned run through confirmation, ordered approvals, PO creation, and an expired-quote hold.
 
@@ -39,7 +40,7 @@ Open **http://127.0.0.1:3000**. Import an `.eml` and optionally a PDF. Named sam
 | Command | Coverage |
 | --- | --- |
 | `npm run check` | TypeScript type check. |
-| `npm test` | 15 tests: validation, CHF approval chain and PO gate, reply/revision reset, PDF limits, model failure, stale dates, and ERP retry/idempotency. External LLM and ERP calls are mocked. |
+| `npm test` | 16 tests: validation, CHF approval chain and PO gate, email deduplication, reply/revision reset, PDF limits, model failure, stale dates, and ERP retry/idempotency. External LLM and ERP calls are mocked. |
 | `npm run check-samples` | Parses all 48 supplied emails and 21 PDFs; does not score extraction accuracy. |
 
 **Evaluation metrics (not yet measured):**

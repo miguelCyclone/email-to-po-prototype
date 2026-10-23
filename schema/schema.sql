@@ -14,6 +14,13 @@ CREATE TABLE IF NOT EXISTS requests (
   updated_at TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS requests_state_updated ON requests(state, updated_at);
+CREATE TABLE IF NOT EXISTS email_identities (
+  sender TEXT NOT NULL,
+  message_id TEXT NOT NULL,
+  content_sha256 TEXT NOT NULL,
+  request_id TEXT NOT NULL REFERENCES requests(id),
+  PRIMARY KEY(sender, message_id)
+);
 CREATE TABLE IF NOT EXISTS source_documents (
   id INTEGER PRIMARY KEY,
   request_id TEXT NOT NULL REFERENCES requests(id),

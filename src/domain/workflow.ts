@@ -3,7 +3,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { basename, join, resolve } from 'node:path';
 import type { Draft, Issue, RequestRow, Validated } from '../../schema/contracts.js';
 import { Repository } from '../db/repository.js';
-import { parseMail } from '../intake/mail.js';
+import { emailContentHash, parseMail, type ParsedMail } from '../intake/mail.js';
 import { PdfLimitError, readPdf } from '../intake/pdfText.js';
 import { extract, parseDraft } from '../extraction/ollama.js';
 import { reconcileQuote } from '../extraction/quoteFacts.js';
@@ -18,7 +18,28 @@ const quoteFolder = resolve('docs/quotes-20261022T095543Z-1-001/quotes');
 const emptyDraft = (): Draft => ({ supplier_name: null, cost_centre: null, gl_account: null, requested_delivery_date: null, quote_valid_until: null, currency: null, line_items: [], tax_amount: null, freight_amount: null, discount_amount: null, stated_total: null, evidence: [], conflicts: [] });
 
 export class Workflow {
+  private legacyIdentityIndex?: Promise<void>;
   constructor(readonly repo: Repository, readonly clock: () => Date = () => new Date()) {}
+
+  private indexStoredEmailIdentities(): Promise<void> {
+    return this.legacyIdentityIndex ??= (async () => {
+      for (const stored of this.repo.storedEmails()) {
+        let mail: ParsedMail;
+        try { mail = await parseMail(await readFile(resolve('data/uploads', stored.request_id, stored.file_name))); }
+        catch { continue; } // A missing old upload must not block new intake.
+        if (mail.messageId) this.repo.recordEmailIdentity(mail.sender, mail.messageId, emailContentHash(mail), stored.request_id, true);
+      }
+    })();
+  }
+
+  private duplicateEmail(mail: ParsedMail, sourceHash: string, contentHash: string): string | undefined {
+    const exact = this.repo.findEmailByHash(sourceHash);
+    if (exact) return exact;
+    if (!mail.messageId) return undefined;
+    const known = this.repo.findEmailByIdentity(mail.sender, mail.messageId);
+    if (known && known.content_sha256 !== contentHash) throw new FlowError('Message-ID was reused with different content; procurement must review it.');
+    return known?.request_id;
+  }
 
   detail(id: string): Record<string, unknown> {
     const row = this.repo.get(id);
@@ -32,19 +53,26 @@ export class Workflow {
     if (!raw.length || raw.length > 4_000_000) throw new FlowError('Email must be 1 byte to 4 MB', 413);
     const mail = await parseMail(raw);
     const sourceHash = sha(raw);
-    const previous = this.repo.findEmailByHash(sourceHash);
+    await this.indexStoredEmailIdentities();
+    const contentHash = emailContentHash(mail);
+    const previous = this.duplicateEmail(mail, sourceHash, contentHash);
     if (previous) return this.detail(previous);
     const replyId = `${mail.subject}\n${mail.body}`.match(/REQ-[A-F0-9]{8}/i)?.[0].toUpperCase();
-    if (replyId && this.repo.get(replyId)) return this.importReply(replyId, mail.sender, mail.subject, mail.body, raw, sourceHash);
+    if (replyId && this.repo.get(replyId)) return this.importReply(replyId, mail, raw, sourceHash, contentHash);
     const id = `REQ-${randomUUID().slice(0, 8).toUpperCase()}`;
     const folder = resolve('data/uploads', id);
-    await mkdir(folder, { recursive: true });
-    await writeFile(join(folder, 'source.eml'), raw);
-    this.repo.transaction(() => {
+    const raced = this.repo.transaction(() => {
+      const existing = this.duplicateEmail(mail, sourceHash, contentHash);
+      if (existing) return existing;
       this.repo.create({ id, requester_email: mail.sender, subject: mail.subject, received_at: mail.receivedAt, draft_json: JSON.stringify(emptyDraft()), state: 'review' });
       this.repo.document(id, 'email', 'source.eml', sourceHash, mail.body);
+      if (mail.messageId) this.repo.recordEmailIdentity(mail.sender, mail.messageId, contentHash, id);
       this.repo.audit(id, 1, 'imported', { source_hash: sourceHash });
+      return undefined;
     });
+    if (raced) return this.detail(raced);
+    await mkdir(folder, { recursive: true });
+    await writeFile(join(folder, 'source.eml'), raw);
 
     const quotes = [...mail.attachments];
     if (externalPdf) quotes.push(externalPdf);
@@ -85,25 +113,30 @@ export class Workflow {
     }
   }
 
-  private async importReply(id: string, sender: string, subject: string, body: string, raw: Buffer, sourceHash: string): Promise<Record<string, unknown>> {
+  private async importReply(id: string, mail: ParsedMail, raw: Buffer, sourceHash: string, contentHash: string): Promise<Record<string, unknown>> {
     const row = this.repo.get(id)!;
-    if (sender !== row.requester_email) throw new FlowError('Reply sender does not match the original requester; procurement review is required.', 403);
+    if (mail.sender !== row.requester_email) throw new FlowError('Reply sender does not match the original requester; procurement review is required.', 403);
     if (['submitting', 'submit_error', 'po_created'].includes(row.state)) throw new FlowError('This request already has a frozen ERP submission. Start a new request.');
     const revision = row.revision + 1;
+    const raced = this.repo.transaction(() => {
+      const existing = this.duplicateEmail(mail, sourceHash, contentHash);
+      if (existing) return existing;
+      const current = this.repo.get(id)!;
+      if (current.revision !== row.revision || ['submitting', 'submit_error', 'po_created'].includes(current.state)) throw new FlowError('Request changed while the reply was being imported. Reload before retrying.');
+      this.repo.document(id, 'email', `reply-${revision}.eml`, sourceHash, mail.body);
+      if (mail.messageId) this.repo.recordEmailIdentity(mail.sender, mail.messageId, contentHash, id);
+      this.repo.clearDecisions(id);
+      this.repo.update(id, revision, 'review', row.draft_json, null, null, null);
+      this.repo.audit(id, revision, 'reply_imported', { subject: mail.subject, source_hash: sourceHash });
+      return undefined;
+    });
+    if (raced) return this.detail(raced);
     const folder = resolve('data/uploads', id);
     await mkdir(folder, { recursive: true });
     await writeFile(join(folder, `reply-${revision}.eml`), raw);
-    this.repo.transaction(() => {
-      const current = this.repo.get(id)!;
-      if (current.revision !== row.revision || ['submitting', 'submit_error', 'po_created'].includes(current.state)) throw new FlowError('Request changed while the reply was being imported. Reload before retrying.');
-      this.repo.document(id, 'email', `reply-${revision}.eml`, sourceHash, body);
-      this.repo.clearDecisions(id);
-      this.repo.update(id, revision, 'review', row.draft_json, null, null, null);
-      this.repo.audit(id, revision, 'reply_imported', { subject, source_hash: sourceHash });
-    });
     try {
       const prior = parseDraft(JSON.parse(row.draft_json));
-      const result = await extract(subject, sender, `Previous request draft (retain facts unless corrected):\n${JSON.stringify(prior)}\n\nRequester reply:\n${body}`, '');
+      const result = await extract(mail.subject, mail.sender, `Previous request draft (retain facts unless corrected):\n${JSON.stringify(prior)}\n\nRequester reply:\n${mail.body}`, '');
       const next = result.draft;
       const merged: Draft = { ...prior, ...Object.fromEntries(Object.entries(next).filter(([key, value]) => !['line_items', 'evidence', 'conflicts'].includes(key) && value !== null)),
         line_items: next.line_items.length ? next.line_items.map((line, index) => ({ ...prior.line_items[index], ...Object.fromEntries(Object.entries(line).filter(([, value]) => value !== null)) })) : prior.line_items,
