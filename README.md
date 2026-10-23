@@ -55,14 +55,16 @@ A new email with a new `Message-ID` and no request/thread reference is a new req
 
 ### Extraction accuracy: 10 live tests
 
-Run `npm run eval-extraction`. The tests compare extracted fields against manually labeled sample emails; two include PDFs.
+Run `OLLAMA_MODEL=qwen3:1.7b npm run eval-extraction`. The ten tests compare extracted fields against manually labeled emails; two include PDFs.
 
-| Local baseline, 2026-10-23 (`qwen3:1.7b`) | Emails |
-| --- | --- |
-| Pass: 4/10 | 01, 05, 06, 14 |
-| Fail: 6/10 | 02, 04, 08, 12, 13, 26 |
+| Model and scope | Result | Extraction time |
+| --- | --- | --- |
+| `qwen3:1.7b`, all 10 | 4 pass (01, 05, 06, 14); 6 fail (02, 04, 08, 12, 13, 26) | 17–75 s per email |
+| `qwen2.5:3b-instruct-q4_K_M`, email 12 | Pass | 55 s |
+| Same 3B, emails 01 (PDF) and 02 | Timeout on each | >90 s |
+| `qwen3:8b-q4_K_M`, email 12 | Timeout | >90 s |
 
-Failures include invented values, incorrect quantities, and a date format error. This sample is too small to claim overall model accuracy.
+Measured locally on 2026-10-23 with the app's 90 s extraction timeout. The 3B and 8B probes are not ten-case accuracy scores. The app still defaults to `qwen3:1.7b`. The 1.7B failures include invented values, incorrect quantities, and a date format error.
 
 **Evaluation metrics (not yet measured):**
 
