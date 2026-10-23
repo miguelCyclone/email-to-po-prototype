@@ -302,7 +302,7 @@ flowchart TD
 
 #### Local model and token budget
 
-`qwen3:1.7b` is the local CPU demo model. Eight live imports here took 22–54 s each. Extraction can still be wrong; deterministic checks and requester confirmation gate approvals.
+`qwen3:1.7b` remains the local CPU demo model. The ten-case extraction test took 17–75 s per email and passed 4/10; see [test results](#extraction-accuracy-10-live-tests). The 3B and 8B probes do not establish a better replacement. Code checks and requester confirmation gate approvals.
 
 | Measure | Tokens | Context remaining (%) | Basis |
 | --- | ---: | ---: | --- |
