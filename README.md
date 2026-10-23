@@ -31,10 +31,18 @@ npm start                                       # terminal 2
 Open **http://127.0.0.1:3000**. Import an `.eml` and optionally a PDF. Named sample PDFs resolve from `docs/quotes-*/quotes/`. For a currently valid end-to-end example, run `npm run demo-email` and import `data/demo_current.eml` (stable `Message-ID` for the day). Confirm the draft, approve each shown step, then create the PO. The supplied dated quotes are expired as of 2026-10-22, so they should stop in review.
 
 - Clarifications, confirmations, and rejection notices appear in **Outbox** as drafts. They are not sent.
-- A reply with a `REQ-XXXXXXXX` reference or `In-Reply-To` header updates that request. Corrections create a new revision and reset decisions.
-- Reimporting the same email returns its existing request (raw hash or sender + `Message-ID`). Reused IDs with changed content are blocked for manual review. A new email without a `REQ` or `In-Reply-To` reference starts a separate request.
 - Requester and approver clicks are simulated; there is no login or verified identity.
 - [Video walkthrough](demo/walkthrough.mp4): 42-second silent, captioned run through confirmation, ordered approvals, PO creation, and an expired-quote hold.
+
+## Duplicate protection
+
+| Step | Identity | Repeat behavior |
+| --- | --- | --- |
+| Email import | File hash; sender + `Message-ID` | Return the existing request without extracting again. Same ID with changed content is blocked for review. |
+| Reply | `REQ-XXXXXXXX` reference or `In-Reply-To` | Update the existing request as a new revision; reset confirmation and approvals. |
+| ERP submission | `blp-<request>-<revision>-<payload hash>` | Store the exact payload and key in SQLite; retry the same pair. The mock ERP returns the original PO. |
+
+A new email with a new `Message-ID` and no request/thread reference is a new request. Sender alone cannot identify duplicates: one person can make several purchases.
 
 ## Test bench
 
@@ -54,7 +62,7 @@ Open **http://127.0.0.1:3000**. Import an `.eml` and optionally a PDF. Named sam
 
 ## Mock ERP boundary
 
-The app freezes each ERP payload and its `blp-<request>-<revision>-<payload hash>` key, then resends that exact pair on retry. The [mock PO API](mock_po_api.py) returns the same PO for a repeated `Idempotency-Key`, but does not enforce approvals or all amount, date, and total checks. The app enforces them before POST. Production would need authentication, restricted CORS, API-side approval enforcement, and durable storage.
+The [mock PO API](mock_po_api.py) does not enforce approvals or all amount, date, and total checks. The app enforces them before POST. Production would need authentication, restricted CORS, API-side approval enforcement, and durable storage.
 
 ## Current process and sources of truth
 
